@@ -6,6 +6,12 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['@fhevm/solidity', '@rainbow-me/rainbowkit'],
   },
 
+  // Turbopack configuration
+  turbopack: {},
+
+  // Output configuration
+  outputFileTracingRoot: undefined,
+
   // Security headers for FHEVM compatibility
   async headers() {
     return [
@@ -44,7 +50,12 @@ const nextConfig: NextConfig = {
 
   // Image optimization
   images: {
-    domains: ['sepolia.etherscan.io'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'sepolia.etherscan.io',
+      },
+    ],
   },
 };
 

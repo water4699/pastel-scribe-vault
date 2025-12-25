@@ -342,7 +342,7 @@ export function useMoodDiary({
 
       setClearTrend({
         handle: myTrendHandle,
-        clear: numericValue,
+        clear: numericValue.toString(),
       });
       setMessage("Average decrypted locally.");
     } catch (error) {

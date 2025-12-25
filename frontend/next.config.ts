@@ -9,9 +9,6 @@ const nextConfig: NextConfig = {
   // Turbopack configuration
   turbopack: {},
 
-  // Output configuration
-  outputFileTracingRoot: undefined,
-
   // Security headers for FHEVM compatibility
   async headers() {
     return [

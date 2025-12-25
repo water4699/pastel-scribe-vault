@@ -292,6 +292,10 @@ export const createFhevmInstance = async (parameters: {
   const pub = await publicKeyStorageGet(aclAddress);
   throwIfAborted();
 
+  if (!pub.publicKey) {
+    throw new Error("Public key not found. Please ensure FHEVM is properly initialized.");
+  }
+
   const config: FhevmInstanceConfig = {
     ...relayerSDK.SepoliaConfig,
     network: providerOrUrl,

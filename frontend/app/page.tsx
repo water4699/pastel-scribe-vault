@@ -56,6 +56,17 @@ const MOOD_LABELS = [
   },
 ];
 
+const MOOD_TAGS = [
+  { id: 'work', label: 'Work', emoji: '💼', color: 'bg-blue-100 text-blue-700' },
+  { id: 'family', label: 'Family', emoji: '👨‍👩‍👧‍👦', color: 'bg-green-100 text-green-700' },
+  { id: 'health', label: 'Health', emoji: '🏥', color: 'bg-red-100 text-red-700' },
+  { id: 'social', label: 'Social', emoji: '👥', color: 'bg-purple-100 text-purple-700' },
+  { id: 'personal', label: 'Personal', emoji: '🧘', color: 'bg-orange-100 text-orange-700' },
+  { id: 'finance', label: 'Finance', emoji: '💰', color: 'bg-yellow-100 text-yellow-700' },
+  { id: 'environment', label: 'Environment', emoji: '🏠', color: 'bg-gray-100 text-gray-700' },
+  { id: 'other', label: 'Other', emoji: '🤔', color: 'bg-slate-100 text-slate-700' }
+];
+
 export default function Home() {
   const { address, chainId, isConnected, status: accountStatus } = useAccount();
   const { storage } = useInMemoryStorage();
@@ -74,7 +85,7 @@ export default function Home() {
     provider: eip1193Provider,
     chainId,
     enabled: Boolean(eip1193Provider && chainId),
-    initialMockChains: mockChains,
+    ...(mockChains && { initialMockChains: mockChains }),
   });
 
   const diary = useMoodDiary({
@@ -87,6 +98,8 @@ export default function Home() {
   });
 
   const [selectedMood, setSelectedMood] = useState(3);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [showCalendar, setShowCalendar] = useState(false);
 
   // Enhanced mood selection state management with validation
 
@@ -214,6 +227,36 @@ export default function Home() {
             ))}
           </div>
 
+          {/* Tags Selection */}
+          <div className="space-y-3">
+            <p className="text-sm text-slate-600 font-medium">What influenced your mood? (Optional)</p>
+            <div className="flex flex-wrap gap-2">
+              {MOOD_TAGS.map((tag) => (
+                <button
+                  key={tag.id}
+                  onClick={() => {
+                    setSelectedTags(prev =>
+                      prev.includes(tag.id)
+                        ? prev.filter(id => id !== tag.id)
+                        : [...prev, tag.id]
+                    );
+                  }}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 focus-ring ${
+                    selectedTags.includes(tag.id)
+                      ? `${tag.color} ring-2 ring-slate-400 ring-offset-1`
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  <span className="text-base">{tag.emoji}</span>
+                  {tag.label}
+                  {selectedTags.includes(tag.id) && (
+                    <span className="ml-1 text-xs">×</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="space-y-4">
             <button
               onClick={() => diary.submitMood(selectedMood)}
@@ -228,7 +271,7 @@ export default function Home() {
               ) : (
                 <>
                   <span className="text-xl mr-3">🔒</span>
-                  <span className="relative z-10">Save Encrypted Mood</span>
+                  <span className="relative z-10">Save Encrypted Mood{selectedTags.length > 0 ? ` + ${selectedTags.length} tag${selectedTags.length > 1 ? 's' : ''}` : ''}</span>
                 </>
               )}
               {!diary.isSubmitting && (
@@ -377,30 +420,30 @@ export default function Home() {
           </div>
 
           {diary.message && (
-            <div className="rounded-2xl border border-blue-400/30 bg-blue-500/10 p-4 text-sm text-blue-100">
+            <div className="rounded-2xl border border-blue-200/50 bg-blue-50/80 p-4 text-sm text-slate-700">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-blue-400">💬</span>
-                <span className="font-medium">System Message</span>
+                <span className="text-blue-600">💬</span>
+                <span className="font-medium text-slate-800">System Message</span>
               </div>
               {diary.message}
             </div>
           )}
 
           {chainId && chainId !== 11155111 && chainId !== 31337 && (
-            <div className="rounded-2xl border border-yellow-400/30 bg-yellow-500/10 p-4 text-sm text-yellow-100">
+            <div className="rounded-2xl border border-yellow-200/50 bg-yellow-50/80 p-4 text-sm text-slate-700">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-yellow-400">⚠️</span>
-                <span className="font-medium">Network Warning</span>
+                <span className="text-yellow-600">⚠️</span>
+                <span className="font-medium text-slate-800">Network Warning</span>
               </div>
               Please switch to Sepolia testnet (Chain ID: 11155111) to use this application.
             </div>
           )}
 
           {fheError && (
-            <div className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-100">
+            <div className="rounded-2xl border border-red-200/50 bg-red-50/80 p-4 text-sm text-slate-700">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-red-400">❌</span>
-                <span className="font-medium">FHEVM Error</span>
+                <span className="text-red-600">❌</span>
+                <span className="font-medium text-slate-800">FHEVM Error</span>
               </div>
               <p className="mb-2">{fheError.message}</p>
               <p className="text-xs opacity-80">Please check your wallet connection and try refreshing the page.</p>
@@ -472,6 +515,30 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Mood Calendar Section */}
+      <section className="glass-card-emotional p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">📅</span>
+            <h3 className="text-xl font-bold text-slate-800">
+              Mood History Calendar
+            </h3>
+          </div>
+          <button
+            onClick={() => setShowCalendar(!showCalendar)}
+            className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium transition-colors focus-ring"
+          >
+            {showCalendar ? 'Hide Calendar' : 'Show Calendar'}
+          </button>
+        </div>
+
+        {showCalendar && (
+          <div className="space-y-4">
+            <MoodCalendar />
+          </div>
+        )}
+      </section>
     </div>
   );
 }
@@ -495,6 +562,147 @@ function StatusRow({ label, value, status }: { label: string; value: string; sta
           <div className={`w-2 h-2 rounded-full ${getStatusColor()}`}></div>
         )}
         <span className="font-semibold text-slate-800">{value}</span>
+      </div>
+    </div>
+  );
+}
+
+function MoodCalendar() {
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+
+  // Generate calendar days for current month
+  const getDaysInMonth = (month: number, year: number) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (month: number, year: number) => {
+    return new Date(year, month, 1).getDay();
+  };
+
+  const daysInMonth = getDaysInMonth(currentMonth, currentYear);
+  const firstDayOfMonth = getFirstDayOfMonth(currentMonth, currentYear);
+
+  // Mock mood data for demonstration (in real app, this would come from the diary)
+  const generateMockMoodData = () => {
+    const moodData: { [key: number]: number } = {};
+    // Add some random mood entries for the last 10 days
+    for (let i = 1; i <= Math.min(10, daysInMonth); i++) {
+      if (Math.random() > 0.3) { // 70% chance of having a mood entry
+        moodData[i] = Math.floor(Math.random() * 5) + 1;
+      }
+    }
+    // Add today's mood if not already present
+    if (!moodData[currentDate.getDate()]) {
+      moodData[currentDate.getDate()] = 3; // Default neutral mood
+    }
+    return moodData;
+  };
+
+  const moodData = generateMockMoodData();
+
+  const getMoodColor = (mood: number) => {
+    const colors = {
+      1: 'bg-red-200 border-red-300',
+      2: 'bg-orange-200 border-orange-300',
+      3: 'bg-blue-200 border-blue-300',
+      4: 'bg-green-200 border-green-300',
+      5: 'bg-purple-200 border-purple-300'
+    };
+    return colors[mood as keyof typeof colors] || 'bg-gray-100 border-gray-200';
+  };
+
+  const getMoodEmoji = (mood: number) => {
+    const emojis = {
+      1: '⛈️',
+      2: '☁️',
+      3: '🌤️',
+      4: '☀️',
+      5: '✨'
+    };
+    return emojis[mood as keyof typeof emojis] || '❓';
+  };
+
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="text-center">
+        <h4 className="text-lg font-semibold text-slate-800">
+          {monthNames[currentMonth]} {currentYear}
+        </h4>
+        <p className="text-sm text-slate-600 mt-1">
+          Your mood journey this month
+        </p>
+      </div>
+
+      {/* Calendar Header */}
+      <div className="grid grid-cols-7 gap-1 mb-2">
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+          <div key={day} className="text-center text-sm font-medium text-slate-500 py-2">
+            {day}
+          </div>
+        ))}
+      </div>
+
+      {/* Calendar Grid */}
+      <div className="grid grid-cols-7 gap-1">
+        {/* Empty cells for days before the first day of the month */}
+        {Array.from({ length: firstDayOfMonth }, (_, i) => (
+          <div key={`empty-${i}`} className="aspect-square"></div>
+        ))}
+
+        {/* Calendar days */}
+        {Array.from({ length: daysInMonth }, (_, day) => {
+          const dayNumber = day + 1;
+          const hasMood = moodData[dayNumber];
+          const isToday = dayNumber === currentDate.getDate();
+
+          return (
+            <div
+              key={dayNumber}
+              className={`
+                aspect-square rounded-lg border-2 flex items-center justify-center text-sm font-medium transition-all duration-200
+                ${hasMood
+                  ? getMoodColor(hasMood)
+                  : 'bg-white border-slate-200 hover:border-slate-300'
+                }
+                ${isToday ? 'ring-2 ring-slate-400 ring-offset-1' : ''}
+              `}
+            >
+              <div className="text-center">
+                <div className="text-xs text-slate-600 mb-1">{dayNumber}</div>
+                {hasMood && (
+                  <div className="text-lg">
+                    {getMoodEmoji(hasMood)}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Legend */}
+      <div className="flex flex-wrap justify-center gap-4 pt-4 border-t border-slate-200">
+        <div className="flex items-center gap-2 text-sm text-slate-600">
+          <div className="w-4 h-4 rounded border-2 bg-white border-slate-200"></div>
+          <span>No entry</span>
+        </div>
+        {MOOD_LABELS.slice(0, 5).map(mood => (
+          <div key={mood.score} className="flex items-center gap-2 text-sm text-slate-600">
+            <div className={`w-4 h-4 rounded border-2 ${getMoodColor(mood.score).replace('border-', 'border-').replace('bg-', 'bg-')}`}></div>
+            <span>{mood.emoji} {mood.label}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="text-center text-xs text-slate-500 mt-4">
+        💡 This is a preview calendar. Full functionality will include your actual mood history.
       </div>
     </div>
   );
